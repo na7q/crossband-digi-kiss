@@ -25,7 +25,7 @@ digi_call = 'NA7Q-1'
 
 #Digi only directly heard stations. Ignored by Regen
 direct_path_vhf = False
-direct_path_hf = True
+direct_path_hf = False
 
 #Regen UNFILTERED HF Traffic to VHF. Does NOT bypass dupe_time_vara. Ignores all other settings.
 hf_regen = True
@@ -41,10 +41,15 @@ dupe_time_tnc = 90
 dupe_time_vara = 90
 
 #Call Filter for VHF to HF Traffic. True or False. USE WITH CAUTION if set to FALSE!!
-allowed_callsign_filter = True
+allowed_callsign_filter_tnc = True
+
+#Call Filter for VHF to HF Traffic. Default is False. VHF can handle all HF traffic with ease.
+allowed_callsign_filter_vara = False
 
 #Only these callsigns are allowed to pass from TNC to VARA. Must specify call and ssid.
-allowed_callsign = {"KI7EOR-7", "NA7Q-7", "NA7Q-3", "NA7Q-4"}
+allowed_callsign_tnc = {"KI7EOR-7", "NA7Q-7", "NA7Q-3", "NA7Q-4"}
+#Only these callsigns are allowed to pass from VARA to TNC. Must specify call and ssid.
+allowed_callsign_vara = {"KI7EOR-7", "NA7Q-7", "NA7Q-3", "NA7Q-4"}
 
 #Paths are set by alias without ssid. Will digi anything higher than itself. i.e. WIDE2-5 or WIDE1-3.
 digi_paths = ['PNW1', 'PNW2', 'WIDE1', 'WIDE2']
@@ -359,7 +364,7 @@ def aprslib_parse_vara_to_tnc(line, data):
             formatted_time = datetime.now().strftime("%H:%M:%S")
 
             #Regen
-            if hf_regen and forward_vara_to_tnc_enabled:
+            if hf_regen and forward_vara_to_tnc_enabled and callsign in allowed_callsign_vara or allowed_callsign_filter_vara is False:            
                 tnc_socket.sendall(data)
                 print("Regen Data Sent to TNC")
                 return None
@@ -434,7 +439,7 @@ def aprslib_parse_tnc_to_vara(line, data):
             formatted_time = datetime.now().strftime("%H:%M:%S")
 
             #Regen
-            if vhf_regen and forward_tnc_to_vara_enabled and callsign in allowed_callsign or allowed_callsign_filter is False:
+            if vhf_regen and forward_tnc_to_vara_enabled and callsign in allowed_callsign_tnc or allowed_callsign_filter_tnc is False:
                 print("Callsign found in list.")
                 vara_socket.sendall(data)
                 print("Regen Data Sent to VARA\n")
@@ -460,7 +465,7 @@ def aprslib_parse_tnc_to_vara(line, data):
             decoded_packet = decode_kiss_frame(encoded_packet, formatted_time)
 
             # Check if "from" is in the allowed callsigns for TNC
-            if callsign in allowed_callsign or allowed_callsign_filter is False:
+            if callsign in allowed_callsign_tnc or allowed_callsign_filter_tnc is False:
                 print("Callsign found in list.")
                 
                 if forward_tnc_to_vara_enabled:
